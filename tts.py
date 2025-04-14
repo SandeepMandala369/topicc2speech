@@ -1,11 +1,24 @@
-import pyttsx3, os
+import os
+import uuid
+from gtts import gTTS
 
-def text_to_speech(text: str, output_path: str) -> None:
-    """Convert the given text to speech and save it to output_path (WAV or MP3)."""
-    engine = pyttsx3.init()  # Initialize TTS engine
-    # Ensure the output directory exists
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    # Save the speech audio to the specified file
-    engine.save_to_file(text, output_path)
-    engine.runAndWait()
-    # (No explicit return needed; the file is written to disk)
+BASE_DIR = os.path.dirname(__file__)
+AUDIO_DIR = os.path.join(BASE_DIR, 'static', 'audio')
+
+def text_to_speech(text: str) -> str:
+    """
+    Convert the given text into speech, 
+    save as an mp3 file, and return the relative path.
+    """
+    if not os.path.exists(AUDIO_DIR):
+        os.makedirs(AUDIO_DIR)
+
+    filename = f"tts_{uuid.uuid4().hex[:8]}.mp3"
+    file_path = os.path.join(AUDIO_DIR, filename)
+
+    # Generate TTS with gTTS
+    tts = gTTS(text)
+    tts.save(file_path)
+
+    # Return relative path (Flask serves from 'static/')
+    return f"audio/{filename}"
