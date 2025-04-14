@@ -2,72 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>{{ topic }} – Topic-to-Speech</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <title>{{ topic }} – Topic-to-Speech Result</title>
+  <link rel="stylesheet"
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
 </head>
 <body class="bg-light">
-  <div class="container py-5">
-    <!-- Topic Overview Section -->
-    <h1 class="mb-4">{{ topic }}</h1>
-    <h4>Overview</h4>
-    <p>{{ overview_text }}</p>
-    <audio id="overview-audio" controls autoplay muted playsinline src="{{ url_for('static', filename=overview_audio) }}"></audio>
+  <div class="container py-4">
+    <h2>Topic: {{ topic }}</h2>
 
-    <hr />
-
-    <!-- Subtopic Selection Buttons -->
-    <h5>Explore Subtopics:</h5>
-    <div class="mb-3">
-      {% for subtopic_name in ['History', 'Present', 'Future', 'People', 'Technology', 'Culture', 'Humor', 'Drama'] %}
-        <form class="d-inline" action="{{ url_for('subtopic') }}" method="POST">
-          <input type="hidden" name="topic" value="{{ topic }}">
-          <textarea name="overview_text" style="display:none;">{{ overview_text }}</textarea>
-          <input type="hidden" name="subtopic" value="{{ subtopic_name }}">
-          <button type="submit" class="btn btn-outline-primary me-1 mb-2">{{ subtopic_name }}</button>
-        </form>
-      {% endfor %}
+    <!-- Generated text result -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <p>{{ text }}</p>
+      </div>
     </div>
 
-    <!-- Subtopic Result Section (shown after a subtopic is selected) -->
-    {% if subtopic %}
-      <h4>{{ subtopic }} of {{ topic }}</h4>
-      <p>{{ subtopic_text }}</p>
-      <audio id="subtopic-audio" controls autoplay src="{{ url_for('static', filename=subtopic_audio) }}"></audio>
-    {% endif %}
+    <!-- Audio playback -->
+    <audio class="mb-3" controls autoplay>
+      <source src="{{ url_for('static', filename=audio_file) }}" type="audio/mpeg">
+      Your browser does not support audio playback.
+    </audio>
 
-    <!-- Option to start over with a new topic -->
-    <div class="mt-4">
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">New Topic</a>
-    </div>
+    <!-- Checkboxes for subtopics -->
+    <form method="POST" action="{{ url_for('result') }}">
+      <div class="form-group">
+        <label><strong>Select subtopics to discuss:</strong></label><br>
+        {% for sub in ["History","Present","Future","People","Technology","Culture","Humor","Drama"] %}
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" 
+                   id="subtopic-{{ sub }}" name="subtopics"
+                   value="{{ sub }}"
+                   {% if selected_subtopics and sub in selected_subtopics %}checked{% endif %}>
+            <label class="form-check-label" for="subtopic-{{ sub }}">
+              {{ sub }}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Persist current topic -->
+      <input type="hidden" name="topic" value="{{ topic }}">
+
+      <button type="submit" class="btn btn-primary mt-2">Generate</button>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary mt-2">New Topic</a>
+    </form>
   </div>
-
-  <!-- Script for audio control -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const overviewAudio = document.getElementById("overview-audio");
-      const subtopicAudio = document.getElementById("subtopic-audio");
-
-      // Force play overview audio if no subtopic is selected
-      {% if not subtopic %}
-      if (overviewAudio) {
-        // Unmute and try to play (some browsers require interaction)
-        overviewAudio.muted = false;
-        overviewAudio.play().catch(err => {
-          console.log("Autoplay failed:", err);
-        });
-      }
-      {% endif %}
-
-      // Stop overview when subtopic audio starts
-      if (subtopicAudio && overviewAudio) {
-        subtopicAudio.addEventListener("play", () => {
-          if (!overviewAudio.paused) {
-            overviewAudio.pause();
-            overviewAudio.currentTime = 0;
-          }
-        });
-      }
-    });
-  </script>
 </body>
 </html>
